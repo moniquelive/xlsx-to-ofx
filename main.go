@@ -2,51 +2,64 @@
 package main
 
 import (
-	"log"
+	"embed"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/favicon"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/template/html/v2"
+	"github.com/moniquelive/xlsx-to-ofx/router"
+	"net/http"
 	"os"
-	"time"
+	"runtime"
 )
 
-type Record struct {
-	Date    time.Time
-	History string
-	Doc     string
-	Value   float64
-	Balance float64
-}
-
-type OFXData struct {
-	Now     time.Time
-	Agencia string
-	Conta   string
-	Records []Record
-	Balance float64
-}
+//go:embed web
+var embedFS embed.FS
 
 func main() {
-	var filename string
-	if len(os.Args) > 1 {
-		filename = os.Args[1]
+	var engine *html.Engine
+	if runtime.GOOS == "linux" {
+		engine = productionEngine()
 	} else {
-		filename = "./Extrato_Santander.setembro e outubro 2023.xlsx"
+		engine = developmentEngine()
 	}
-	records, err := parseFile(filename)
-	if err != nil {
-		log.Fatal(err)
+	fiberConfig := fiber.Config{
+		Views:             engine,
+		PassLocalsToViews: true,
 	}
+	corsConfig := cors.Config{
+		AllowOrigins: os.Getenv("CORS_ALLOW_ORIGINS"),
+		AllowHeaders: "Origin, Content-Type, Accept",
+	}
+	app := fiber.New(fiberConfig)
+	app.Use(favicon.New()).
+		Use(logger.New()).
+		Use(helmet.New()).
+		Use(recover.New()).
+		Use(cors.New(corsConfig))
 
-	data := OFXData{
-		Now:     time.Now(),
-		Agencia: "1053",
-		Conta:   "130002469",
-		Records: records[1:],
-		Balance: records[len(records)-1].Balance,
+	router.SetupRoutes(app)
+
+	if runtime.GOOS == "linux" {
+		log.Fatal(app.Listen(":9090"))
+	} else {
+		log.Fatal(app.Listen("localhost:9090"))
 	}
-	// Agencia 1053
-	// Conta brand 13000220-1
-	// Conta 21212 s.a. 13000105-9
-	// Conta 21212AFN 13000246-9
-	if err = tmpl.Execute(os.Stdout, data); err != nil {
-		log.Fatal(err)
-	}
+}
+
+func developmentEngine() (engine *html.Engine) {
+	engine = html.NewFileSystem(http.FS(os.DirFS("web")), ".gohtml")
+	engine.Reload(true)
+	engine.Debug(true)
+	return
+}
+
+func productionEngine() (engine *html.Engine) {
+	engine = html.NewFileSystem(http.FS(embedFS), ".gohtml")
+	engine.Directory = "web"
+	return
 }

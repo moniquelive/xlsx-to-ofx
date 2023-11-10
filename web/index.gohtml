@@ -1,0 +1,25 @@
+<main class="container">
+    <h2>Escolha o arquivo XLSX para converter</h2>
+    <form x-data="{submitted: false}" @submit="submitted=true"
+          action="/convert" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="{{.csrfToken}}">
+
+        <label for="account">Número da Conta Corrente
+            <select name="account" id="account" required>
+                <option value="" selected>Escolha uma conta...</option>
+                <option value="130002201">Conta Brand</option>
+                <option value="130001059">Conta 21212 S.A.</option>
+                <option value="130002469">Conta 21212 AFN</option>
+            </select>
+        </label>
+
+        <label for="xlsx-file">Arquivo XLSX
+            <input type="file" name="xlsxfile" id="xlsx-file" required
+                   accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        </label>
+
+        <button type="submit">
+            <span>Converter</span>
+        </button>
+    </form>
+</main>

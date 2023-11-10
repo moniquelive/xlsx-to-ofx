@@ -1,9 +1,12 @@
-package main
+package generator
 
 import (
 	"fmt"
+	"io"
 	"text/template"
 	"time"
+
+	"github.com/moniquelive/xlsx-to-ofx/parser"
 )
 
 var ofx = `
@@ -79,3 +82,15 @@ var fm = template.FuncMap{
 }
 
 var tmpl = template.Must(template.New("ofx").Funcs(fm).Parse(ofx))
+
+type OFXData struct {
+	Now     time.Time
+	Agencia string
+	Conta   string
+	Records []parser.Record
+	Balance float64
+}
+
+func Fill(data OFXData, wr io.Writer) error {
+	return tmpl.Execute(wr, data)
+}

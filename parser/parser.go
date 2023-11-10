@@ -1,6 +1,7 @@
-package main
+package parser
 
 import (
+	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -8,9 +9,17 @@ import (
 	"github.com/tealeg/xlsx/v3"
 )
 
-func parseFile(filename string) ([]Record, error) {
+type Record struct {
+	Date    time.Time
+	History string
+	Doc     string
+	Value   float64
+	Balance float64
+}
+
+func ParseReader(reader io.ReaderAt, size int64) ([]Record, error) {
 	// open an existing file
-	wb, err := xlsx.OpenFile(filename)
+	wb, err := xlsx.OpenReaderAt(reader, size)
 	if err != nil {
 		return nil, err
 	}
