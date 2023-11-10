@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -45,6 +46,8 @@ func main() {
 	router.SetupRoutes(app)
 
 	if runtime.GOOS == "linux" {
+		// embedded static stuff
+		app.Get("/*", filesystem.New(filesystem.Config{PathPrefix: "web", Root: http.FS(embedFS)}))
 		log.Fatal(app.Listen(":9090"))
 	} else {
 		log.Fatal(app.Listen("localhost:9090"))
