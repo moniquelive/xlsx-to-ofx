@@ -28,7 +28,8 @@ RUN upx --lzma /go/bin/main
 
 #-----------------------------------------------------------------------------
 FROM scratch
-ENV TZ=America/Sao_Paulo
+ENV TZ=America/Sao_Paulo \
+    PORT=0.0.0.0:9090
 
 COPY --from=go-builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=go-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
