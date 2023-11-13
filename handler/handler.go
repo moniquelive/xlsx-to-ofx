@@ -20,6 +20,7 @@ var CsrfProtection = csrf.New(csrf.Config{
 	Expiration:     1 * time.Hour,
 	KeyGenerator:   utils.UUIDv4,
 	ContextKey:     "token",
+	SingleUseToken: true,
 })
 
 // Index handler. HTTP method GET.
