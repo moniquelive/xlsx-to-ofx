@@ -18,7 +18,7 @@ var CsrfProtection = csrf.New(csrf.Config{
 	CookieName:     "csrf_",
 	CookieSameSite: "Strict",
 	Expiration:     1 * time.Hour,
-	KeyGenerator:   utils.UUID,
+	KeyGenerator:   utils.UUIDv4,
 	ContextKey:     "token",
 })
 
