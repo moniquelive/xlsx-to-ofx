@@ -54,7 +54,9 @@ func setupFiberApp(engine *html.Engine) *fiber.App {
 	})
 	app.Use(favicon.New()).
 		Use(logger.New()).
-		Use(helmet.New()).
+		Use(helmet.New(helmet.Config{
+			ReferrerPolicy: "strict-origin-when-cross-origin",
+		})).
 		Use(recover.New()).
 		Use(cors.New(cors.Config{
 			AllowOrigins: os.Getenv("CORS_ALLOW_ORIGINS"),
