@@ -3,12 +3,11 @@ package main
 
 import (
 	"embed"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/template/html/v2"
 	"net/http"
 	"os"
 	"runtime"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
@@ -16,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/template/html/v2"
 
 	"github.com/moniquelive/xlsx-to-ofx/router"
 )
@@ -24,16 +24,13 @@ import (
 var embedFS embed.FS
 
 func main() {
-	goos := runtime.GOOS
-	engine := getEngine(goos)
+	engine := getEngine(runtime.GOOS)
 	app := setupFiberApp(engine)
 
 	router.SetupRoutes(app)
+	app.All("/*", filesystem.New(filesystem.Config{PathPrefix: "web", Root: engine.FileSystem}))
 
 	port := getPort()
-	if goos == "linux" {
-		app.All("/*", filesystem.New(filesystem.Config{PathPrefix: "web", Root: http.FS(embedFS)}))
-	}
 	log.Fatal(app.Listen(port))
 }
 
