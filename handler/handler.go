@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/utils"
 
@@ -13,6 +14,15 @@ import (
 	"github.com/moniquelive/xlsx-to-ofx/parser"
 )
 
+// CSRF Error handler
+var csrfErrorHandler = func(c *fiber.Ctx, err error) error {
+	// Log the error so we can track who is trying to perform CSRF attacks
+	// customize this to your needs
+	log.Debugf("CSRF Error: %v Request: %v From: %v\n", err, c.OriginalURL(), c.IP())
+
+	// Return a 403 Forbidden response for all other requests
+	return c.Status(fiber.StatusForbidden).SendString("403 Forbidden")
+}
 var CsrfProtection = csrf.New(csrf.Config{
 	KeyLookup:      "form:_csrf",
 	CookieName:     "csrf_",
@@ -20,6 +30,7 @@ var CsrfProtection = csrf.New(csrf.Config{
 	Expiration:     1 * time.Hour,
 	KeyGenerator:   utils.UUIDv4,
 	ContextKey:     "token",
+	ErrorHandler:   csrfErrorHandler,
 	SingleUseToken: true,
 })
 
