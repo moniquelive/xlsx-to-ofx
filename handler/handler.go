@@ -1,8 +1,9 @@
+// Package handler defines the http handlers
 package handler
 
 import (
-	"bytes"
 	"fmt"
+	"mime/multipart"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,7 +15,6 @@ import (
 	"github.com/moniquelive/xlsx-to-ofx/parser"
 )
 
-// CSRF Error handler
 var csrfErrorHandler = func(c *fiber.Ctx, err error) error {
 	// Log the error so we can track who is trying to perform CSRF attacks
 	// customize this to your needs
@@ -23,6 +23,8 @@ var csrfErrorHandler = func(c *fiber.Ctx, err error) error {
 	// Return a 403 Forbidden response for all other requests
 	return c.Status(fiber.StatusForbidden).SendString("403 Forbidden")
 }
+
+// CsrfProtection acts as a middleware for the http routes
 var CsrfProtection = csrf.New(csrf.Config{
 	KeyLookup:      "form:_csrf",
 	CookieName:     "csrf_",
@@ -34,29 +36,29 @@ var CsrfProtection = csrf.New(csrf.Config{
 	SingleUseToken: true,
 })
 
-// Index handler. HTTP method GET.
+// Index GET handler
 func Index(c *fiber.Ctx) error {
 	return c.Render("index", fiber.Map{
 		"csrfToken": c.Locals("token"),
 	}, "layouts/main")
 }
 
-// DoConvert handler. HTTP method POST.
-func DoConvert(c *fiber.Ctx) error {
-	formFile, err := c.FormFile("xlsxfile")
-	if err != nil {
+// DoConvert POST handler
+func DoConvert(c *fiber.Ctx) (err error) {
+	var formFile *multipart.FileHeader
+	if formFile, err = c.FormFile("xlsxfile"); err != nil {
 		return err
 	}
-	file, err := formFile.Open()
-	if err != nil {
+	var file multipart.File
+	if file, err = formFile.Open(); err != nil {
 		return err
 	}
-	records, err := parser.ParseReader(file, formFile.Size)
-	if err != nil {
+	var records []parser.Record
+	if records, err = parser.ParseReader(file, formFile.Size); err != nil {
 		return err
 	}
-	buffer := new(bytes.Buffer)
 	acct := c.FormValue("account")
+	c.Attachment(fmt.Sprintf("converted-%s.ofx", acct))
 	data := generator.OFXData{
 		Now:     time.Now(),
 		Agencia: "1053",
@@ -64,9 +66,8 @@ func DoConvert(c *fiber.Ctx) error {
 		Records: records[1:],
 		Balance: records[len(records)-1].Balance,
 	}
-	if err := generator.Fill(data, buffer); err != nil {
+	if err = generator.Fill(data, c.Response().BodyWriter()); err != nil {
 		return err
 	}
-	c.Attachment(fmt.Sprintf("converted-%s.ofx", acct))
-	return c.SendStream(buffer, buffer.Len())
+	return nil
 }

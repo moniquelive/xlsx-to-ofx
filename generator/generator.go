@@ -1,3 +1,4 @@
+// Package generator is responsible for generating OFX files
 package generator
 
 import (
@@ -9,8 +10,7 @@ import (
 	"github.com/moniquelive/xlsx-to-ofx/parser"
 )
 
-var ofx = `
-OFXHEADER:100
+var ofx = `OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -83,6 +83,7 @@ var fm = template.FuncMap{
 
 var tmpl = template.Must(template.New("ofx").Funcs(fm).Parse(ofx))
 
+// OFXData contains the data to fill out the OFX file
 type OFXData struct {
 	Now     time.Time
 	Agencia string
@@ -91,6 +92,7 @@ type OFXData struct {
 	Balance float64
 }
 
+// Fill fills out the OFX template with the given data, outputing to the given io.Writer
 func Fill(data OFXData, wr io.Writer) error {
 	return tmpl.Execute(wr, data)
 }

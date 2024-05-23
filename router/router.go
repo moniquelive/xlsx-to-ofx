@@ -1,3 +1,4 @@
+// Package router sets up web routes
 package router
 
 import (
@@ -6,6 +7,7 @@ import (
 	"github.com/moniquelive/xlsx-to-ofx/handler"
 )
 
+// SetupRoutes defines the app web routes
 func SetupRoutes(app *fiber.App) {
 	app.Static("/css", "./web/css").
 		Static("/images", "./web/images").

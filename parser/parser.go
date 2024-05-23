@@ -1,3 +1,4 @@
+// Package parser is responsible for parsing XLSX files
 package parser
 
 import (
@@ -9,6 +10,7 @@ import (
 	"github.com/tealeg/xlsx/v3"
 )
 
+// Record represents a line in the spreadsheet
 type Record struct {
 	Date    time.Time
 	History string
@@ -17,9 +19,11 @@ type Record struct {
 	Balance float64
 }
 
-func ParseReader(reader io.ReaderAt, size int64) ([]Record, error) {
+// ParseReader parses the XLSX file and returns a slice of Records
+func ParseReader(reader io.ReaderAt, size int64) (records []Record, err error) {
 	// open an existing file
-	wb, err := xlsx.OpenReaderAt(reader, size)
+	var wb *xlsx.File
+	wb, err = xlsx.OpenReaderAt(reader, size)
 	if err != nil {
 		return nil, err
 	}
@@ -29,12 +33,13 @@ func ParseReader(reader io.ReaderAt, size int64) ([]Record, error) {
 		return nil, err
 	}
 
-	records := make([]Record, 0, sh.MaxRow)
+	records = make([]Record, 0, sh.MaxRow)
 	err = sh.ForEachRow(func(r *xlsx.Row) error {
 		record := Record{}
 		col := 0
 		err = r.ForEachCell(func(c *xlsx.Cell) error {
-			v, err := c.FormattedValue()
+			var v string
+			v, err = c.FormattedValue()
 			if err == nil {
 				switch col {
 				case 0:
